@@ -30,6 +30,14 @@ function App() {
     }
   };
 
+  const getNextPosition = (status: TaskStatus) => {
+    const maxPosition = tasks
+      .filter((task) => task.status === status)
+      .reduce((max, task) => Math.max(max, task.position), -1);
+
+    return maxPosition + 1;
+  };
+
   const addTask = async (title: string) => {
     const maxPosition = tasks
       .filter((t) => t.status === 'todo')
@@ -71,9 +79,15 @@ function App() {
       newStatus = 'todo';
     }
 
+    const nextPosition = getNextPosition(newStatus);
+
     const { error } = await supabase
       .from('tasks')
-      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .update({
+        status: newStatus,
+        position: nextPosition,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', id);
 
     if (error) {
@@ -100,9 +114,15 @@ function App() {
       return;
     }
 
+    const nextPosition = getNextPosition(newStatus);
+
     const { error } = await supabase
       .from('tasks')
-      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .update({
+        status: newStatus,
+        position: nextPosition,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', draggedTask.id);
 
     if (error) {
@@ -127,7 +147,9 @@ function App() {
   };
 
   const getTasksByStatus = (status: TaskStatus) =>
-    tasks.filter((task) => task.status === status);
+    tasks
+      .filter((task) => task.status === status)
+      .sort((a, b) => a.position - b.position);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
